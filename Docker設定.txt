@@ -1,0 +1,54 @@
+dockerの設定
+
+1.Dockerfileの作成
+
+Dockerfileは、コンテナの構成を定義するファイルです。
+
+Djangoアプリケーションを含むコンテナを作成するために、次の内容をDockerfileに記述します。
+
+Dockerfile
+
+    # Python 3.8スリム版のイメージを使用
+    FROM python:3.8-slim
+    
+    # 作業ディレクトリを指定
+    WORKDIR /app
+    
+    # プロジェクトの依存関係をインストールするため、requirements.txtをコピー
+    COPY requirements.txt /app/
+    
+    # 必要なパッケージをインストール
+    RUN pip install --no-cache-dir -r requirements.txt
+    
+    # プロジェクトの全ファイルをコンテナにコピー
+    COPY . /app/
+    
+    # コンテナがリッスンするポートを指定（Djangoのデフォルトポートは8000）
+    EXPOSE 8000
+    
+    # Djangoアプリケーションを起動するためのコマンドを設定
+    CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+FROM python:3.8-slim: 
+	Python 3.8のスリム版のイメージを使用しています。
+	このイメージは軽量で、必要なパッケージだけを追加します。
+
+WORKDIR /app: 
+	作業ディレクトリを/appに設定します。
+	コンテナ内で作業するディレクトリを指定します。
+
+COPY requirements.txt /app/: 
+	依存関係をインストールするためにrequirements.txtをコンテナ内にコピーします。
+
+RUN pip install --no-cache-dir -r requirements.txt: 
+	requirements.txtに記載されたパッケージをインストールします。
+
+COPY . /app/: 
+	プロジェクトファイルをコンテナにコピーします。
+
+EXPOSE 8000: 
+	コンテナ内で開放するポートを指定します。Djangoのデフォルトの開発サーバーはポート8000で動作します。
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]: 
+	コンテナが起動する際に、Django開発サーバーを起動します。
+
