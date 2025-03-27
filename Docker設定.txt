@@ -52,3 +52,83 @@ EXPOSE 8000:
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]: 
 	コンテナが起動する際に、Django開発サーバーを起動します。
 
+2.requirements.txtの作成
+Djangoプロジェクトで使用する必要なパッケージをrequirements.txtに記述します。
+例えば、MySQLを使う場合、mysqlclientも必要です。
+
+	Django>=3.0,<4.0
+	mysqlclient
+
+Django: Djangoのバージョンを指定します。
+
+mysqlclient: MySQLデータベースとDjangoを連携させるためのライブラリです。
+
+3. docker-compose.ymlの作成（オプション）
+複数のコンテナを一元管理するために、docker-compose.ymlを使用することをお勧めします。これにより、DjangoとMySQLのコンテナを同時に起動し、管理することができます。
+
+docker-compose.yml
+
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # MySQLのrootパスワード
+      MYSQL_DATABASE: chatbot_db        # 使用するデータベース名
+    ports:
+      - "3306:3306"  # MySQLのポートを開放
+    volumes:
+      - db_data:/var/lib/mysql  # MySQLのデータを永続化
+
+  web:
+    build: .  # Dockerfileを使用してwebサービスをビルド
+    command: python manage.py runserver 0.0.0.0:8000  # Djangoの開発サーバーを起動
+    volumes:
+      - .:/app  # 現在のディレクトリをコンテナ内にマウント
+    ports:
+      - "8000:8000"  # Djangoアプリケーションのポートを開放
+    depends_on:
+      - db  # webサービスはdbサービスが起動してから開始
+
+volumes:
+  db_data:  # MySQLデータを保存するためのボリューム
+db: MySQLサービスの設定。MYSQL_ROOT_PASSWORDでrootユーザーのパスワードを指定し、MYSQL_DATABASEで作成するデータベース名を指定します。
+
+web: Djangoアプリケーションの設定。build: .でDockerfileを使ってDjangoコンテナをビルドします。depends_onを使って、DjangoコンテナはMySQLコンテナが起動するまで待機します。
+
+4. Dockerコンテナをビルドして起動
+すべての設定が整ったら、Dockerコンテナをビルドして実行します。docker-composeを使用して、DjangoとMySQLのサービスを一度に起動できます。
+
+コンテナをビルドして起動：
+
+    docker-compose up --build
+
+これにより、web（Django）とdb（MySQL）の2つのコンテナが起動します。
+
+コンテナのログを確認：
+
+    docker-compose logs
+
+このコマンドで、コンテナが正常に起動しているかどうかを確認できます。
+
+5. データベースのマイグレーション
+Djangoアプリケーションの初期設定として、データベースのマイグレーションを行う必要があります。
+docker-compose execを使用して、webコンテナ内でマイグレーションを実行します。
+
+    docker-compose exec web python manage.py migrate
+
+これにより、データベースが設定され、必要なテーブルが作成されます。
+
+6. アクセスと確認
+Djangoアプリケーションが起動したら、ブラウザでhttp://localhost:8000にアクセスして、Djangoの初期画面が表示されることを確認します。
+
+7. コンテナの停止と削除
+コンテナを停止したい場合、以下のコマンドで停止します。
+
+    docker-compose down
+
+これで、DjangoアプリケーションとMySQLをDockerコンテナで実行する準備が整いました。
+
+
+
